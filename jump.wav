@@ -1,0 +1,6 @@
+import base64
+jump_wav = b"""
+UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
+"""
+with open("assets/jump.wav", "wb") as f:
+    f.write(base64.b64decode(jump_wav))
