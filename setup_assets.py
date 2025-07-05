@@ -1,66 +1,18 @@
-
 import os
 import base64
 
 os.makedirs('assets', exist_ok=True)
 
-dog_data = b"""
-iVBORw0KGgoAAAANSUhEUgAAACgAAAAgCAYAAABLFQIFAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB
+dog_data = b"""iVBORw0KGgoAAAANSUhEUgAAACgAAAAgCAYAAABLFQIFAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB
 0klEQVRIie3XwU3DMBAF0Dc5Ab0IC9hIFuxCXa/09E/knKpJ8CM+L6s4z8Vq0A0IKh1RMdMZJX4M
 BYfPXAqAQUUAu49BdE+1UX47E+xgDzYDz6jPNzGLK2Af/JIVUuCN9Ldl/LdxLX07NED5c6Dp0ESu
 FOVVqVOuUB9EDrN0h9QrH0a5EszUr5cbJTVQm+7F5LgkR2IqP9xlF3IUQkRwjEFkZDaPjNCSINJu
 Fo6GOjvD1hUw8Nz1S+FfAjp9RKLeyKk+1Kk7Ml3yzsRdWLJIVJKVuQuCFq2lVvLJBuKgo70Rsmrg
 Xt7Wyd5e51Ed7vyMYxiO/AFbDnnDwEKegE7u6CuEmqz7bD7ntF3NcTiO9lGG7X0nLIP1XmG32+3S
 7ATpGnSftjUAsH8ApssSk93r7GjOiyTSoUxS1Gk2GUXzOvt6wIuElJcQBAhvxHNK6J8BRBvYbQvo
-8J3IgAAAABJRU5ErkJggg==
-"""
+8J3IgAAAABJRU5ErkJggg=="""
 
-cow_data = b"""
-iVBORw0KGgoAAAANSUhEUgAAADwAAAAgCAYAAADxtfEHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC
-lklEQVRYhe3Xy2rDMBQA0MrACZQIZwDJcAY6YCFOAOuwAjTAOpgAbOAB3wDHX9D6RhF8LFyWPWHg
-DnzfzTkGEZZOMtCrQF7o0cD6o40iT1a4BoAcBjAqACMnAAR9MxDJHeK5hvh7U5tZEOvdwBz17ILR
-Aa+BX4N1IFtf1zHn6ocn3w4XYJvdSfoH6byUVxFIOSzYO4qEOiN0Y4BzQaHAPqIqBWhxjkBqqOEc
-zv35AxSh9AqCSlFJAc0HIyqQyTnDfwCxC1M5ABAUg5CIU9LI0CYEeCX0paAoJHphNVuRFTNqwEOZ
-uID2oXw4aPQUXlmJwDzxGADk8RhKQEUkKhNI+kI6JJqhnpSevHw9ccn2XfP7CBt+fJIWZYxNGaLT
-vI7Kg0CMvCmlXVoXzAr45RJqMeja0xmRWQ9F2v3mX3MCSc5P8f0DmEKrIcyHM0JzJKsSYYpzRGzI
-cgI7kSYtOwjoHeQj3Qvij6SNQ6S9JK8n3L4XtA4j2qDkr7Rh8BrvgPVLgCJykqOKfCxojGpNwQGg
-mSMpMtqTZKGmQouRHgj8Ho5KwIgGDEqOipBjMIAAAAASUVORK5CYII=
-"""
+with open("assets/dog.png", "wb") as f:
+    f.write(base64.b64decode(dog_data))
 
-cow_mad_data = b"""
-iVBORw0KGgoAAAANSUhEUgAAADwAAAAgCAYAAADxtfEHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC
-K0lEQVRYhe3YsW3CMBCG4U/gA3ICdICMQD1gB2iBdIgX7gAlEgFcCDUjA4Aw6ADeJHqHn6ZqRz8T
-1vFcQ0Ho9H9rrSe9DplFcD4CL/0Tpn4co8a9qNeAIIHWBn+yqAbC4NjqijZOk4t5l0BgeHY9jBQT
-2DaxE/4bRw8DRzhvT1Ol9PwJADrMLZ/nK34DVBQCgVA6hxIUQjiPVA+j26DIEtAxQJwqJJSZLPF8
-FA6HAQaj9dFoz4PcoTQo5yGsvxCITCEQe8ZiOIwIGxbiHAYQBqNCHcIQCIYh0EoChQKhAr/U5vEr
-A4HjF9BiOpPIZrK/EqvVwmcC+vMEAKlU6nEbh6Jxy6UyNZTKZPJJBJGR+DhFDhRKJSuUYajQajYb
-jY5yOwCsVhMJhMJOju0TwXA4HgNKpXLpVJyqVSr1dEwGAyGQyGS0WCy1pWq1u91Op1Op1WuVwuFw
-5LQKBYvEIpFAKBYDJZDKBQAODnJ73BzsA92XquGAbBa6XQ6s+ioCNgRrOD/0kuXTawZ1qAAAAAElF
-TkSuQmCC
-"""
-
-horseshoe_data = b"""
-iVBORw0KGgoAAAANSUhEUgAAABQAAAASCAYAAABU0/0DAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA
-F0lEQVQ4y2NgGAWjYBSMglEwCkbNqBaMwCgAFLxgo6x3PhmAAAAAASUVORK5CYII=
-"""
-
-jump_wav = b"""
-UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
-"""
-
-kick_wav = b"""
-UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
-"""
-
-def save_file(filename, data):
-    with open(filename, "wb") as f:
-        f.write(base64.b64decode(data))
-
-save_file("assets/dog.png", dog_data)
-save_file("assets/cow.png", cow_data)
-save_file("assets/cow_mad.png", cow_mad_data)
-save_file("assets/horseshoe.png", horseshoe_data)
-save_file("assets/jump.wav", jump_wav)
-save_file("assets/kick.wav", kick_wav)
-
-print("All assets saved to 'assets/' folder.")
+print("✅ Asset 'dog.png' created in assets/")
