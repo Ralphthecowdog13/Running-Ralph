@@ -1,0 +1,7 @@
+import base64
+horseshoe_data = b"""
+iVBORw0KGgoAAAANSUhEUgAAABQAAAASCAYAAABU0/0DAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA
+F0lEQVQ4y2NgGAWjYBSMglEwCkbNqBaMwCgAFLxgo6x3PhmAAAAAASUVORK5CYII=
+"""
+with open("assets/horseshoe.png", "wb") as f:
+    f.write(base64.b64decode(horseshoe_data))
