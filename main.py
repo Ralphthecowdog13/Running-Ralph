@@ -1,244 +1,328 @@
 import pygame
-import random
 import os
 import sys
 import time
 
-WIDTH, HEIGHT = 800, 400
-FPS = 60
+pygame.init()
 
+# Screen setup
+WIDTH, HEIGHT = 800, 400
+SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Running Ralph")
+
+# Colors
 SKY_BLUE = (135, 206, 235)
-GROUND_BROWN = (210, 180, 140)
+LIGHT_BROWN = (210, 180, 140)
 BLACK = (0, 0, 0)
-BROWN = (139, 69, 19)
-RED = (255, 0, 0)
 WHITE = (255, 255, 255)
 
-def load_image(path, size=None):
-    img = pygame.image.load(path).convert_alpha()
-    if size:
-        img = pygame.transform.scale(img, size)
-    return img
+# Load assets
+ASSETS_PATH = os.path.join(os.path.dirname(__file__), 'assets')
 
-def load_sound(path):
-    try:
-        return pygame.mixer.Sound(path)
-    except pygame.error:
-        return None
+def load_image(name):
+    return pygame.image.load(os.path.join(ASSETS_PATH, name)).convert_alpha()
 
-class Player:
+def load_sound(name):
+    return pygame.mixer.Sound(os.path.join(ASSETS_PATH, name))
+
+DOG_IMG = load_image('dog.png')
+COW_IMG = load_image('cow.png')
+COW_MAD_IMG = load_image('cow_mad.png')
+HORSESHOE_IMG = load_image('horseshoe.png')
+JUMP_SOUND = load_sound('jump.wav')
+KICK_SOUND = load_sound('kick.wav')
+
+FONT = pygame.font.SysFont('arial', 28)
+BIG_FONT = pygame.font.SysFont('arial', 48)
+SMALL_FONT = pygame.font.SysFont('arial', 22)
+
+clock = pygame.time.Clock()
+
+# Game variables
+gravity = 0.8
+score = 0
+high_score = 0
+lives = 5
+
+# Load or create highscore file
+HS_FILE = "highscore.txt"
+if not os.path.exists(HS_FILE):
+    with open(HS_FILE, 'w') as f:
+        f.write("0\n---")
+with open(HS_FILE, 'r') as f:
+    lines = f.read().splitlines()
+    high_score = int(lines[0])
+    high_score_initials = lines[1] if len(lines) > 1 else "---"
+
+# Classes
+class Player(pygame.sprite.Sprite):
     def __init__(self):
-        self.image = load_image(os.path.join('assets', 'dog.png'), (40, 40))
-        self.rect = self.image.get_rect(midbottom=(100, HEIGHT - 20))
-        self.vel_y = 0
-        self.jump = False
-        self.lives = 5
+        super().__init__()
+        self.image = pygame.transform.scale(DOG_IMG, (50, 50))
+        self.rect = self.image.get_rect(midbottom=(100, HEIGHT - 40))
+        self.pos = pygame.Vector2(self.rect.topleft)
+        self.vel = pygame.Vector2(0, 0)
         self.on_ground = True
+        self.lives = lives
 
-    def update(self, keys):
+    def input(self):
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.rect.x -= 5
+            self.pos.x -= 5
         if keys[pygame.K_RIGHT]:
-            self.rect.x += 5
-        if not self.jump and keys[pygame.K_SPACE] and self.on_ground:
-            self.jump = True
-            self.vel_y = -14
+            self.pos.x += 5
+        if keys[pygame.K_SPACE] and self.on_ground:
+            self.vel.y = -15
             self.on_ground = False
-            if jump_sound:
-                jump_sound.play()
-        if self.jump:
-            self.rect.y += self.vel_y
-            self.vel_y += 0.8
-            if self.rect.bottom >= HEIGHT - 20:
-                self.rect.bottom = HEIGHT - 20
-                self.jump = False
-                self.on_ground = True
+            JUMP_SOUND.play()
 
-    def draw(self, win):
-        win.blit(self.image, self.rect)
-
-class Cow:
-    def __init__(self):
-        self.normal_img = load_image(os.path.join('assets', 'cow.png'), (60, 40))
-        self.chase_img = load_image(os.path.join('assets', 'cow_mad.png'), (60, 40))
-        self.image = self.normal_img
-        self.rect = self.image.get_rect(midbottom=(300, HEIGHT - 20))
-        self.normal_speed = 2
-        self.chase_speed = 4
-        self.chasing = False
-        self.chase_start_time = 0
-        self.chase_duration = 3
-        self.chase_cooldown = 5
-        self.last_chase_end = 0
-
-    def update(self, player_rect):
-        dist = player_rect.x - self.rect.x
-        now = time.time()
-        if abs(dist) > 150 and not self.chasing and (now - self.last_chase_end) > self.chase_cooldown:
-            self.chasing = True
-            self.chase_start_time = now
-            self.image = self.chase_img
-        if self.chasing and (now - self.chase_start_time) > self.chase_duration:
-            self.chasing = False
-            self.last_chase_end = now
-            self.image = self.normal_img
-        if abs(dist) < 40:
-            return "kick"
-        if self.chasing:
-            if dist > 0:
-                self.rect.x += self.chase_speed
-            else:
-                self.rect.x -= self.chase_speed
-        else:
-            self.rect.x += self.normal_speed
-            return "moving"
-        return None
-
-    def draw(self, win):
-        win.blit(self.image, self.rect)
-
-class Obstacle:
-    def __init__(self, x):
-        self.image = load_image(os.path.join('assets', 'horseshoe.png'), (20, 20))
-        self.rect = self.image.get_rect(midbottom=(x, HEIGHT - 20))
+    def apply_gravity(self):
+        self.vel.y += gravity
+        self.pos.y += self.vel.y
+        if self.pos.y >= HEIGHT - 90:
+            self.pos.y = HEIGHT - 90
+            self.vel.y = 0
+            self.on_ground = True
 
     def update(self):
-        self.rect.x -= 3
+        self.input()
+        self.apply_gravity()
+        self.rect.topleft = self.pos
 
-    def draw(self, win):
-        win.blit(self.image, self.rect)
+class Cow(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.transform.scale(COW_IMG, (60, 60))
+        self.mad_image = pygame.transform.scale(COW_MAD_IMG, (60, 60))
+        self.rect = self.image.get_rect(midbottom=(WIDTH - 100, HEIGHT - 40))
+        self.pos = pygame.Vector2(self.rect.topleft)
+        self.speed = 2
+        self.kicking = False
+        self.kick_timer = 0
 
-pygame.init()
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Running Ralph")
-clock = pygame.time.Clock()
-font = pygame.font.SysFont("arial", 24)
+    def update(self, player_pos):
+        dist = abs(player_pos.x - self.pos.x)
+        if dist < 50:
+            # kick Ralph
+            if not self.kicking:
+                self.kicking = True
+                self.kick_timer = pygame.time.get_ticks()
+                KICK_SOUND.play()
+        elif dist > 150:
+            # chase Ralph
+            if player_pos.x < self.pos.x:
+                self.pos.x -= self.speed
+            else:
+                self.pos.x += self.speed
+            self.kicking = False
+        else:
+            self.kicking = False
 
-try:
-    jump_sound = load_sound(os.path.join('assets', 'jump.wav'))
-    kick_sound = load_sound(os.path.join('assets', 'kick.wav'))
-except:
-    jump_sound, kick_sound = None, None
+        # Reset kick animation after 1 second
+        if self.kicking and pygame.time.get_ticks() - self.kick_timer > 1000:
+            self.kicking = False
 
-def save_score(initials, score):
-    usb_path = os.path.join(os.path.dirname(sys.argv[0]), "scores")
-    os.makedirs(usb_path, exist_ok=True)
-    with open(os.path.join(usb_path, "high_scores.txt"), "a") as file:
-        file.write(f"{initials} {score}\\n")
+        self.rect.topleft = self.pos
 
-def game_over_screen(score):
-    WIN.fill(SKY_BLUE)
-    text = font.render(f"Game Over! Final Score: {score}", True, BLACK)
-    WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 60))
+    def draw(self, surface):
+        if self.kicking:
+            surface.blit(self.mad_image, self.rect)
+        else:
+            surface.blit(self.image, self.rect)
 
-    initials = ""
-    input_active = True
+class Horseshoe(pygame.sprite.Sprite):
+    def __init__(self, x):
+        super().__init__()
+        self.image = pygame.transform.scale(HORSESHOE_IMG, (30, 20))
+        self.rect = self.image.get_rect(midbottom=(x, HEIGHT - 40))
 
-    while input_active:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN and initials:
-                    save_score(initials, score)
-                    input_active = False
-                elif event.key == pygame.K_BACKSPACE:
-                    initials = initials[:-1]
-                elif len(initials) < 3 and event.unicode.isalpha():
-                    initials += event.unicode.upper()
+    def update(self, speed):
+        self.rect.x -= speed
+        if self.rect.right < 0:
+            self.kill()
 
-        WIN.fill(SKY_BLUE)
-        WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 60))
-        prompt = font.render("Enter initials: " + initials, True, BLACK)
-        WIN.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT // 2))
-        pygame.display.update()
-        clock.tick(30)
+# Functions for splash, game over, etc.
+def draw_text_center(surface, text, font, color, y):
+    render = font.render(text, True, color)
+    rect = render.get_rect(center=(WIDTH // 2, y))
+    surface.blit(render, rect)
 
-def main_menu():
-    WIN.fill(SKY_BLUE)
-    title = font.render("Running Ralph", True, BLACK)
-    prompt = font.render("Press Enter to Start", True, BLACK)
-    WIN.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//2 - 60))
-    WIN.blit(prompt, (WIDTH//2 - prompt.get_width()//2, HEIGHT//2))
-    pygame.display.update()
+def splash_screen():
+    SCREEN.fill(SKY_BLUE)
+    draw_text_center(SCREEN, "🐶 RUNNING RALPH 🐮", BIG_FONT, BLACK, HEIGHT // 2 - 50)
+    draw_text_center(SCREEN, "Press SPACE to start", FONT, BLACK, HEIGHT // 2 + 30)
+    pygame.display.flip()
+
+    barking_sound = JUMP_SOUND  # reuse jump sound as bark placeholder
+    barking_sound.play()
+
     waiting = True
     while waiting:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                waiting = False
-        clock.tick(30)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    waiting = False
+        clock.tick(60)
 
-def pause_screen():
-    pause_text = font.render("Paused. Press P to resume.", True, BLACK)
-    WIN.blit(pause_text, (WIDTH//2 - pause_text.get_width()//2, HEIGHT//2))
-    pygame.display.update()
-    paused = True
-    while paused:
+def game_over_screen(final_score):
+    global high_score, high_score_initials
+    SCREEN.fill(SKY_BLUE)
+
+    # Update high score
+    if final_score > high_score:
+        high_score = final_score
+        # Ask for initials
+        initials = ""
+        entering = True
+        while entering:
+            SCREEN.fill(SKY_BLUE)
+            draw_text_center(SCREEN, f"New High Score: {final_score}", BIG_FONT, BLACK, HEIGHT//4)
+            draw_text_center(SCREEN, "Enter your initials:", FONT, BLACK, HEIGHT//2 - 30)
+            draw_text_center(SCREEN, initials, BIG_FONT, BLACK, HEIGHT//2 + 30)
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        initials = initials[:-1]
+                    elif event.key == pygame.K_RETURN and len(initials) > 0:
+                        entering = False
+                    elif len(initials) < 3 and event.unicode.isalpha():
+                        initials += event.unicode.upper()
+
+            clock.tick(30)
+
+        high_score_initials = initials
+        with open(HS_FILE, 'w') as f:
+            f.write(f"{high_score}\n{high_score_initials}")
+
+    else:
+        draw_text_center(SCREEN, f"Score: {final_score}", BIG_FONT, BLACK, HEIGHT // 4)
+        draw_text_center(SCREEN, f"High Score: {high_score} ({high_score_initials})", FONT, BLACK, HEIGHT // 4 + 60)
+
+    # Credits scroll
+    credits = [
+        "Lead Developer: Dennis Hendrix",
+        "Artistic Inspiration: Ralph Hendrix",
+        "Logistical Support: Lee Ann Short",
+        "Game Tester: Bernie Short",
+        "",
+        "Press Enter to Restart or Esc to Quit"
+    ]
+
+    y_offset = HEIGHT
+    scrolling = True
+    while scrolling:
+        SCREEN.fill(SKY_BLUE)
+        # Draw score and high score on top
+        draw_text_center(SCREEN, f"Score: {final_score}", BIG_FONT, BLACK, 50)
+        draw_text_center(SCREEN, f"High Score: {high_score} ({high_score_initials})", FONT, BLACK, 100)
+
+        # Scroll credits
+        y_offset -= 1
+        for i, line in enumerate(credits):
+            text_surface = FONT.render(line, True, BLACK)
+            SCREEN.blit(text_surface, (WIDTH//2 - text_surface.get_width()//2, y_offset + i*30))
+
+        pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                paused = False
-        clock.tick(15)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    scrolling = False
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+        if y_offset + len(credits)*30 < 0:
+            scrolling = False
+
+        clock.tick(60)
 
 def main():
+    global score
+
+    splash_screen()
+
     player = Player()
     cow = Cow()
-    obstacles = []
-    score = 0
-    last_score_time = time.time()
+    horseshoes = pygame.sprite.Group()
+
     running = True
+    game_speed = 5
+    spawn_timer = 0
+    score = 0
+    lives_left = player.lives
+
     while running:
-        clock.tick(FPS)
-        keys = pygame.key.get_pressed()
+        dt = clock.tick(60) / 1000
+        SCREEN.fill(SKY_BLUE)
+        pygame.draw.rect(SCREEN, LIGHT_BROWN, (0, HEIGHT - 40, WIDTH, 40))
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                pause_screen()
-        player.update(keys)
-        cow_state = cow.update(player.rect)
-        now = time.time()
-        if cow_state == "moving" and now - last_score_time >= 1:
-            score += 1
-            last_score_time = now
-        if cow_state == "kick":
-            player.lives -= 1
-            if kick_sound:
-                kick_sound.play()
-            pygame.time.delay(500)
-        for obs in obstacles[:]:
-            obs.update()
-            if player.rect.colliderect(obs.rect):
-                player.lives -= 1
-                if kick_sound:
-                    kick_sound.play()
-                obstacles.remove(obs)
-            elif obs.rect.right < 0:
-                obstacles.remove(obs)
-        if random.randint(1, 100) < 2:
-            obstacles.append(Obstacle(WIDTH + 20))
-        WIN.fill(SKY_BLUE)
-        pygame.draw.rect(WIN, GROUND_BROWN, (0, HEIGHT - 20, WIDTH, 20))
-        player.draw(WIN)
-        cow.draw(WIN)
-        for obs in obstacles:
-            obs.draw(WIN)
-        score_text = font.render(f"Score: {score}", True, BLACK)
-        lives_text = font.render(f"Lives: {player.lives}", True, BLACK)
-        WIN.blit(score_text, (10, 10))
-        WIN.blit(lives_text, (10, 40))
-        pygame.display.update()
-        if player.lives <= 0:
-            running = False
-    game_over_screen(score)
+
+        player.update()
+        cow.update(player.pos)
+
+        # Spawn horseshoes randomly
+        spawn_timer += dt
+        if spawn_timer > 2:
+            spawn_timer = 0
+            horseshoe = Horseshoe(WIDTH + 30)
+            horseshoes.add(horseshoe)
+
+        # Update horseshoes
+        for h in horseshoes:
+            h.update(game_speed)
+            if player.rect.colliderect(h.rect):
+                # Jump sound played on jump, no penalty here
+                pass
+            if h.rect.right < 0:
+                horseshoes.remove(h)
+
+        # Check collision between player and cow
+        if player.rect.colliderect(cow.rect):
+            # Determine kick and damage timing
+            if not cow.kicking:
+                lives_left -= 1
+                KICK_SOUND.play()
+                cow.kicking = True
+                cow.kick_timer = pygame.time.get_ticks()
+                if lives_left <= 0:
+                    running = False
+
+        cow.draw(SCREEN)
+        SCREEN.blit(player.image, player.rect)
+        horseshoes.draw(SCREEN)
+
+        # Update score only when cow moves (chasing)
+        if abs(player.pos.x - cow.pos.x) > 150:
+            score += dt
+
+        # Increase difficulty over time
+        if int(score) % 10 == 0 and int(score) > 0:
+            game_speed = min(15, 5 + int(score) // 10)
+
+        # Draw UI
+        score_text = FONT.render(f"Score: {int(score)}", True, BLACK)
+        lives_text = FONT.render(f"Lives: {lives_left}", True, BLACK)
+        SCREEN.blit(score_text, (10, 10))
+        SCREEN.blit(lives_text, (WIDTH - 110, 10))
+
+        pygame.display.flip()
+
+    game_over_screen(int(score))
 
 if __name__ == "__main__":
-    main_menu()
     main()
-    pygame.quit()
