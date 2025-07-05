@@ -1,4 +1,9 @@
+
+import os
 import base64
+
+os.makedirs('assets', exist_ok=True)
+
 dog_data = b"""
 iVBORw0KGgoAAAANSUhEUgAAACgAAAAgCAYAAABLFQIFAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB
 0klEQVRIie3XwU3DMBAF0Dc5Ab0IC9hIFuxCXa/09E/knKpJ8CM+L6s4z8Vq0A0IKh1RMdMZJX4M
@@ -9,10 +14,7 @@ Xt7Wyd5e51Ed7vyMYxiO/AFbDnnDwEKegE7u6CuEmqz7bD7ntF3NcTiO9lGG7X0nLIP1XmG32+3S
 7ATpGnSftjUAsH8ApssSk93r7GjOiyTSoUxS1Gk2GUXzOvt6wIuElJcQBAhvxHNK6J8BRBvYbQvo
 8J3IgAAAABJRU5ErkJggg==
 """
-with open("assets/dog.png", "wb") as f:
-    f.write(base64.b64decode(dog_data))
 
-import base64
 cow_data = b"""
 iVBORw0KGgoAAAANSUhEUgAAADwAAAAgCAYAAADxtfEHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC
 lklEQVRYhe3Xy2rDMBQA0MrACZQIZwDJcAY6YCFOAOuwAjTAOpgAbOAB3wDHX9D6RhF8LFyWPWHg
@@ -24,10 +26,7 @@ vI7Kg0CMvCmlXVoXzAr45RJqMeja0xmRWQ9F2v3mX3MCSc5P8f0DmEKrIcyHM0JzJKsSYYpzRGzI
 cgI7kSYtOwjoHeQj3Qvij6SNQ6S9JK8n3L4XtA4j2qDkr7Rh8BrvgPVLgCJykqOKfCxojGpNwQGg
 mSMpMtqTZKGmQouRHgj8Ho5KwIgGDEqOipBjMIAAAAASUVORK5CYII=
 """
-with open("assets/cow.png", "wb") as f:
-    f.write(base64.b64decode(cow_data))
 
-import base64
 cow_mad_data = b"""
 iVBORw0KGgoAAAANSUhEUgAAADwAAAAgCAYAAADxtfEHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC
 K0lEQVRYhe3YsW3CMBCG4U/gA3ICdICMQD1gB2iBdIgX7gAlEgFcCDUjA4Aw6ADeJHqHn6ZqRz8T
@@ -39,26 +38,29 @@ jY5yOwCsVhMJhMJOju0TwXA4HgNKpXLpVJyqVSr1dEwGAyGQyGS0WCy1pWq1u91Op1Op1WuVwuFw
 5LQKBYvEIpFAKBYDJZDKBQAODnJ73BzsA92XquGAbBa6XQ6s+ioCNgRrOD/0kuXTawZ1qAAAAAElF
 TkSuQmCC
 """
-with open("assets/cow_mad.png", "wb") as f:
-    f.write(base64.b64decode(cow_mad_data))
 
-import base64
 horseshoe_data = b"""
 iVBORw0KGgoAAAANSUhEUgAAABQAAAASCAYAAABU0/0DAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA
 F0lEQVQ4y2NgGAWjYBSMglEwCkbNqBaMwCgAFLxgo6x3PhmAAAAAASUVORK5CYII=
 """
-with open("assets/horseshoe.png", "wb") as f:
-    f.write(base64.b64decode(horseshoe_data))
 
-import base64
 jump_wav = b"""
 UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
 """
-with open("assets/jump.wav", "wb") as f:
-    f.write(base64.b64decode(jump_wav))
 
-import base64
 kick_wav = b"""
 UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
 """
-with open("assets/kick.wav", "wb
+
+def save_file(filename, data):
+    with open(filename, "wb") as f:
+        f.write(base64.b64decode(data))
+
+save_file("assets/dog.png", dog_data)
+save_file("assets/cow.png", cow_data)
+save_file("assets/cow_mad.png", cow_mad_data)
+save_file("assets/horseshoe.png", horseshoe_data)
+save_file("assets/jump.wav", jump_wav)
+save_file("assets/kick.wav", kick_wav)
+
+print("All assets saved to 'assets/' folder.")
