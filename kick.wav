@@ -1,0 +1,6 @@
+import base64
+kick_wav = b"""
+UklGRjQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=
+"""
+with open("assets/kick.wav", "wb") as f:
+    f.write(base64.b64decode(kick_wav))
