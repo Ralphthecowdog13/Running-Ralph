@@ -19,8 +19,12 @@ kick_sound_data = b"UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YYAAAAD/
 
 def save_asset(filename, b64data):
     clean_b64 = b64data.replace(b"\n", b"").replace(b" ", b"")
+    missing_padding = 4 - (len(clean_b64) % 4)
+    if missing_padding and missing_padding != 4:
+        clean_b64 += b"=" * missing_padding
     with open(os.path.join('assets', filename), 'wb') as f:
         f.write(base64.b64decode(clean_b64))
+
 
 save_asset('dog.png', dog_data)
 save_asset('cow.png', cow_data)
